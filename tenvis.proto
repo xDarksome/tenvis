@@ -1,0 +1,89 @@
+syntax = "proto3";
+package tenvis;
+
+import "google/protobuf/empty.proto";
+import "proto/annotations.proto";
+
+service Tenvis {
+    rpc StreamSCPMessages(google.protobuf.Empty) returns (stream SCPMessages);
+    rpc GetLedger(GetLedgerRequest) returns (LedgerMessage);
+    rpc GetVoting(GetVotingRequest) returns (Voting) {
+        option (google.api.http) = { get: "/votings/{id}" };
+    }
+    rpc CreateVoting(CreateVotingOperation) returns (Voting) {
+        option (google.api.http) = { post: "/votings" };
+    };
+    rpc Vote(VoteOperation) returns (Voting) {
+        option (google.api.http) = { post: "/vote" };
+    };
+}
+
+message GetVotingRequest {
+    uint64 id = 1;
+}
+
+message GetLedgerRequest {
+    uint64 index = 1;
+}
+
+message SCPMessage {
+    enum Type {
+        UNKNOWN = 0;
+        VOTE_NOMINATE = 1;
+        ACCEPT_NOMINATE = 2;
+        VOTE_PREPARE = 3;
+        ACCEPT_PREPARE = 4;
+        VOTE_COMMIT = 5;
+        ACCEPT_COMMIT = 6;
+    }
+
+    Type type = 1;
+    uint64 slot_index = 2;
+    uint32 counter = 3;
+    bytes value = 4;
+}
+
+message SCPMessages {
+    repeated SCPMessage list = 1;
+    bytes signature = 2;
+}
+
+message Ledger {
+    uint64 index = 1;
+    bytes value = 2;
+}
+
+message LedgerMessage {
+    Ledger ledger = 1;
+    bytes signature = 2;
+}
+
+message TenvisOperations {
+    repeated CreateVotingOperation create_voting = 2;
+    repeated VoteOperation vote = 3;
+}
+
+message CreateVotingOperation {
+    string title = 1;
+    string organizer = 2;
+    repeated string participants = 3;
+    repeated string options = 4;
+    bytes signature = 5;
+}
+
+message VoteOperation {
+    string participant_id = 1;
+    uint64 voting_id = 2;
+    string option = 3;
+    bytes signature = 4;
+}
+
+message Voting {
+    uint64 id = 1;
+    string title = 2;
+    string organizer = 3;
+    repeated string participants = 4;
+    repeated string voted = 5;
+    map<string, uint32> options = 6;
+    string result = 7;
+}
